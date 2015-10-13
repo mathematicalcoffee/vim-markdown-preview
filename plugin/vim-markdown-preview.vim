@@ -2,19 +2,20 @@
 "                    Vim Markdown Preview
 "   git@github.com:JamshedVesuna/vim-markdown-preview.git
 "============================================================
-" Usage: ^P to enable on-write in that tab.
-" Problem: it's opening a new browser tab every time?
+" Usage: ^W to toggle on-write generation in that tab; ^P to force a preview
 "
 let b:vim_markdown_preview_browser = get(g:, 'vim_markdown_preview_browser', 'Google Chrome')
 " either 0 (temp file) or 1 (local file)
-let b:vim_markdown_preview_temp_file = get(g:, 'vim_markdown_preview_temp_file', 0)
-let b:vim_markdown_preview_toggle = get(g:, 'vim_markdown_preview_toggle', 0)
+let b:vim_markdown_preview_use_local = get(g:, 'vim_markdown_preview_use_local', 0)
+let b:vim_markdown_preview_remove_output = get(g:, 'vim_markdown_preview_remove_output', 0)
 let b:vim_markdown_preview_github = get(g:, 'vim_markdown_preview_github', 0)
 let b:vim_markdown_preview_command = get(g:, 'vim_markdown_preview_command', 'pandoc --toc --standalone -t html ')
 let b:vim_markdown_preview_on_write = get(g:, 'vim_markdown_preview_on_write', 0)
-
 if !exists("g:vim_markdown_preview_hotkey")
     let g:vim_markdown_preview_hotkey='<C-p>'
+endif
+if !exists("g:vim_markdown_toggle_hotkey")
+    let g:vim_markdown_toggle_hotkey='<C-k>'
 endif
 
 " o'wise disabled by default.
@@ -39,11 +40,7 @@ function! Vim_Markdown_Preview_On_Write()
     let t:vim_markdown_preview_on_write = b:vim_markdown_preview_on_write
   endif
   if t:vim_markdown_preview_on_write == 1
-    if b:vim_markdown_preview_toggle == 0
       :call Vim_Markdown_Preview()
-    else
-      :call Vim_Markdown_Preview_Local()
-    end
   end
 endfunction
 
@@ -61,18 +58,26 @@ function! Vim_Markdown_Preview()
     let OSNAME = 'mac'
   endif
 
-  let curr_file = expand('%:p')
+  let curr_file = expand('%:p')  " full path
+  let out_file = '/tmp/vim-markdown-preview.html'
+  let out_file_windowname = 'vim-markdown-preview.html'
+  if b:vim_markdown_preview_use_local == 1 
+      let out_file = curr_file . '.html' " includes path prefix
+      let out_file_windowname = expand('%:t') . '.html' " without path prefix
+  endif
+  let out_file = shellescape(out_file)
+  let curr_file = shellescape(curr_file)
 
   if b:vim_markdown_preview_github == 1
-    call system('grip "' . curr_file . '" --export /tmp/vim-markdown-preview.html')
+    call system('grip "' . curr_file . '" --export ' . out_file)
   else
-    call system(b:vim_markdown_preview_command . ' ' . shellescape(curr_file) . ' > /tmp/vim-markdown-preview.html')
+    call system(b:vim_markdown_preview_command . ' ' . curr_file . ' > ' . out_file)
   endif
 
   if OSNAME == 'unix'
-    let chrome_wid = system("xdotool search --name 'vim-markdown-preview.html - " . b:vim_markdown_preview_browser . "'")
+    let chrome_wid = system("xdotool search --name '". out_file_windowname . " - " . b:vim_markdown_preview_browser . "'")
     if !chrome_wid
-      call system('see /tmp/vim-markdown-preview.html &> /dev/null &')
+      call system('see ' . out_file . ' &> /dev/null &')
     else
       let curr_wid = system('xdotool getwindowfocus')
       call system('xdotool windowmap ' . chrome_wid)
@@ -83,68 +88,15 @@ function! Vim_Markdown_Preview()
   endif
 
   if OSNAME == 'mac'
-    call system('open -g /tmp/vim-markdown-preview.html')
+    call system('open -g ' . out_file)
   endif
 
-  if b:vim_markdown_preview_temp_file == 1
+  if b:vim_markdown_preview_remove_output == 1
     sleep 1000m
-    call system('rm /tmp/vim-markdown-preview.html')
+    call system('rm ' . out_file)
   endif
 endfunction
 
-
-"Renders html locally and displays images
-function! Vim_Markdown_Preview_Local()
-  if b:vim_markdown_preview_toggle == 0 && get(t:, 'vim_markdown_preview_enabled', 0) == 0
-      return 0
-  endif
-
-  let OSNAME = 'Unidentified'
-
-  if has('win32')
-    " Not yet used
-    let OSNAME = 'win32'
-  endif
-  if has('unix')
-    let OSNAME = 'unix'
-  endif
-  if has('mac')
-    let OSNAME = 'mac'
-  endif
-
-  let curr_file = expand('%:p')
-  let curr_file2 = expand('%:t')
-
-  if b:vim_markdown_preview_github == 1
-    call system('grip "' . curr_file . '" --export ' . curr_file . '.html')
-  else
-    " call system('markdown "' . curr_file . '" > ' . curr_file . '.html')
-    call system(b:vim_markdown_preview_command . ' ' . shellescape(curr_file) . ' > ' . curr_file . '.html')
-
-  endif
-
-  if OSNAME == 'unix'
-    let chrome_wid = system("xdotool search --name '". curr_file2 . ".html - " . b:vim_markdown_preview_browser . "'")
-    if !chrome_wid
-      call system('see ' . curr_file . '.html &> /dev/null &')
-    else
-      let curr_wid = system('xdotool getwindowfocus')
-      call system('xdotool windowmap ' . chrome_wid)
-      call system('xdotool windowactivate ' . chrome_wid)
-      call system("xdotool key 'ctrl+r'")
-      call system('xdotool windowactivate ' . curr_wid)
-    endif
-  endif
-
-  if OSNAME == 'mac'
-    call system('open -g ' . curr_file . '.html')
-  endif
-
-  if b:vim_markdown_preview_temp_file == 1
-    sleep 1000m
-    call system('rm ' . curr_file . '.html')
-  endif
-endfunction
-
-:exec 'autocmd Filetype markdown,md map <buffer> ' . g:vim_markdown_preview_hotkey . ' :call Vim_Markdown_Preview_Toggle_On_Write()<CR>'
+:exec 'autocmd Filetype markdown,md map <buffer> ' . g:vim_markdown_toggle_hotkey . ' :call Vim_Markdown_Preview_Toggle_On_Write()<CR>'
+:exec 'autocmd Filetype markdown,md map <buffer> ' . g:vim_markdown_preview_hotkey . ' :call Vim_Markdown_Preview()<CR>'
 autocmd BufWritePost *.markdown,*.md :call Vim_Markdown_Preview_On_Write()

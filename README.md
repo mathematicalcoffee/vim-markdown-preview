@@ -8,11 +8,12 @@ Vim Markdown Preview
     - [Max OS X](#mac-os-x)
     - [Unix](#unix)
 - [Options](#options)
-    - [Image rendering & save on buffer write](#toggle)
-    - [Hotkey](#hotkey)
+    - [Writing to a local or temp file](#output)
+    - [Deleting the output file](#temp)
+    - [Save on buffer write](#toggle)
+    - [Manual compiling](#manual)
     - [Pandoc command](#command)
     - [Browser](#browser)
-    - [Temp File](#temp)
     - [Github Flavoured Markdown](#github)
 - [Behind the Scenes](#behind-the-scenes)
 
@@ -41,6 +42,8 @@ Usage
 
 By default, when in a `.markdown` or `.md` file, and  `Ctrl-p` is pressed, this plugin will either open a preview in your browser, or refresh your current preview (can be remapped, see [Options](#options)).
 
+Pressing `Ctrl-k` will toggle whether compilation happens automatically on writing the file, for the current tab (by default it is off).
+
 Your cursor will remain in Vim.
 
 Requirements
@@ -62,34 +65,52 @@ Options
 All options have default values and work out of the box. If you prefer to change these, just add the following lines to your [.vimrc](http://vim.wikia.com/wiki/Open_vimrc_file) file.
 Note that after changing an option, you have to restart Vim for the change to take effect.
 
+<a name='output'></a>
+### The `vim_markdown_preview_use_local` option
+
+By default the output HTML file is `/tmp/vim-markdown-preview.html`. This avoids polluting your current directory, but also means that relative images to paths will not render properly. If you wish, you may instead have the output HTML file be generated in the current directory (as `current_file_name.html`, e.g. `README.md.html`), by setting this option to `1`.
+
+Default: 0
+
+Example: Render the output HTML file locally rather than a temp directory.
+```vim
+let vim_markdown_preview_use_local=1
+```
+
+<a name='temp'></a>
+### The `vim_markdown_preview_temp_file` option
+
+By default, this plugin keeps the rendered `.html` file. If you would automatically like to remove the html file after opening it in a browser, set this option to `1`. Note that removing the rendered html file with a slow browser may err. This can be helpful in conjuction with setting `vim_markdown_preview_use_local` to 1 if you do not wish to clutter your local directory, but you want images/links with relative paths to render in the HTML file.
+
+Default: `0`
+
+Example: Remove the rendered preview.
+```vim
+let vim_markdown_preview_temp_file=1
+```
+
 <a name='toggle'></a>
-### The `vim_markdown_preview_toggle` option
+### The `vim_markdown_preview_on_write` and `vim_markdown_preview_toggle_hotkey` option
 
-This option does two things (to be fixed by [#17](https://github.com/JamshedVesuna/vim-markdown-preview/issues/17)):
+The plugin can do an automatic preview whenever you save the file. This is tab-specific. To enable it for the current tab, use `<Ctrl-k>`. To change this hotkey, set the `vim_markdown_preview_toggle_hotkey` option. Don't forget to add the single quotation marks.
 
-1. Display images in the preview
-2. Generate preview on buffer write (Example: on `:w`)
+Default: `'<C-k>'`
 
-There are a total of four values (`0`, `1`, `2`, `3`) this option can take.
-
-Default: `0`, which maps Control p (*not* a buffer write) to generating the preview and does *not* display images.
-
-Example: To display images with the [hotkey](#hotkey) mapping (defaults to Control p).
+Example: Mapping Control M.
 ```vim
-let vim_markdown_preview_toggle=1
+let vim_markdown_preview_toggle_hotkey='<C-m>'
 ```
 
-Example: To display images automatically on buffer write.
+By default, preview-on-write is initially disabled for each tab. To initially enable it for all markdown files (so that the first `C-k` will disable it), set `vim_markdown_preview_on_write` to 1.
+
+Default: 0
+
+Example: To have all markdown files preview automatically on write by default.
 ```vim
-let vim_markdown_preview_toggle=2
+let vim_markdown_preview_on_write=1
 ```
 
-Example: To disregard images and still automatically preview on buffer write.
-```vim
-let vim_markdown_preview_toggle=3
-```
-
-<a name='hotkey'></a>
+<a name='manual'></a>
 ### The `vim_markdown_preview_hotkey` option
 
 By default, this plugin maps `<C-p>` (Control p) to activate the preview. To remap Control p to a different hotkey, change the binding. Don't forget to add the single quotation marks.
@@ -124,18 +145,6 @@ Default: `'Google Chrome'`
 Example: Using Google Chrome.
 ```vim
 let vim_markdown_preview_browser='Google Chrome'
-```
-
-<a name='temp'></a>
-### The `vim_markdown_preview_temp_file` option
-
-By default, this plugin keeps the rendered `.html` file. If you would automatically like to remove the html file after opening it in a browser, set this option to `1`. Note that removing the rendered html file with a slow browser may err.
-
-Default: `0`
-
-Example: Remove the rendered preview.
-```vim
-let vim_markdown_preview_temp_file=1
 ```
 
 <a name='github'></a>
