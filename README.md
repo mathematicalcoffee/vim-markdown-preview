@@ -10,6 +10,7 @@ Vim Markdown Preview
 - [Options](#options)
     - [Image rendering & save on buffer write](#toggle)
     - [Hotkey](#hotkey)
+    - [Pandoc command](#command)
     - [Browser](#browser)
     - [Temp File](#temp)
     - [Github Flavoured Markdown](#github)
@@ -20,6 +21,8 @@ Intro
 A small Vim plugin for previewing markdown files in a browser.
 
 The aim of this plugin is to be light weight with minimal dependencies. Thus, there is *no* polling engine or webserver involved.
+
+Oct 2015: Modified to call `pandoc` by default and allow specification of the command (see [`vim_markdown_preview_command`](#command)).
 
 ![Screenshot](images/screenshot.gif?raw=true "Preview on buffer write using Unix")
 
@@ -96,6 +99,18 @@ Default: `'<C-p>'`
 Example: Mapping Control M.
 ```vim
 let vim_markdown_preview_hotkey='<C-m>'
+```
+
+<a name='command'></a>
+### The `vim_markdown_preview_command` option
+
+By default, this plugin uses `pandoc --toc --standalone -t html ` to compile the document.
+You can change the command.
+
+Example: adding `--mathjax` to the command:
+
+```vim
+let g:vim_markdown_preview_command = 'pandoc --mathjax --toc --standalone -t html '
 ```
 
 <a name='browser'></a>

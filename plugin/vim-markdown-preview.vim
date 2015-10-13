@@ -7,6 +7,7 @@ let b:vim_markdown_preview_browser = get(g:, 'vim_markdown_preview_browser', 'Go
 let b:vim_markdown_preview_temp_file = get(g:, 'vim_markdown_preview_temp_file', 0)
 let b:vim_markdown_preview_toggle = get(g:, 'vim_markdown_preview_toggle', 0)
 let b:vim_markdown_preview_github = get(g:, 'vim_markdown_preview_github', 0)
+let b:vim_markdown_preview_command = get(g:, 'vim_markdown_preview_command', 'pandoc --toc --standalone -t html ')
 
 if !exists("g:vim_markdown_preview_hotkey")
     let g:vim_markdown_preview_hotkey='<C-p>'
@@ -32,7 +33,7 @@ function! Vim_Markdown_Preview()
   if b:vim_markdown_preview_github == 1
     call system('grip "' . curr_file . '" --export /tmp/vim-markdown-preview.html')
   else
-    call system('markdown "' . curr_file . '" > /tmp/vim-markdown-preview.html')
+    call system(b:vim_markdown_preview_command . ' ' . shellescape(curr_file) . ' > /tmp/vim-markdown-preview.html')
   endif
 
   if OSNAME == 'unix'
@@ -53,7 +54,7 @@ function! Vim_Markdown_Preview()
   endif
 
   if b:vim_markdown_preview_temp_file == 1
-    sleep 200m
+    sleep 1000m
     call system('rm /tmp/vim-markdown-preview.html')
   endif
 endfunction
@@ -80,7 +81,8 @@ function! Vim_Markdown_Preview_Local()
   if b:vim_markdown_preview_github == 1
     call system('grip "' . curr_file . '" --export ' . curr_file . '.html')
   else
-    call system('markdown "' . curr_file . '" > ' . curr_file . '.html')
+    " call system('markdown "' . curr_file . '" > ' . curr_file . '.html')
+    call system(b:vim_markdown_preview_command . ' ' . shellescape(curr_file) . ' > ' . curr_file . '.html')
 
   endif
 
@@ -102,7 +104,7 @@ function! Vim_Markdown_Preview_Local()
   endif
 
   if b:vim_markdown_preview_temp_file == 1
-    sleep 200m
+    sleep 1000m
     call system('rm ' . curr_file . '.html')
   endif
 endfunction
