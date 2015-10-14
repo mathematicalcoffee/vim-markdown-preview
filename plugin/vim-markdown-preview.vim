@@ -8,7 +8,7 @@ let b:vim_markdown_preview_browser = get(g:, 'vim_markdown_preview_browser', 'Go
 " either 0 (temp file) or 1 (local file)
 let b:vim_markdown_preview_use_local = get(g:, 'vim_markdown_preview_use_local', 0)
 let b:vim_markdown_preview_remove_output = get(g:, 'vim_markdown_preview_remove_output', 0)
-let b:vim_markdown_preview_command = get(g:, 'vim_markdown_preview_command', 'pandoc --toc --standalone -t html INFILE > OUTFILE')
+let b:vim_markdown_preview_command = get(g:, 'vim_markdown_preview_command', 'pandoc --toc -V pagetitle:INFILE --standalone -t html INFILE > OUTFILE')
 let g:vim_markdown_preview_on_write = get(g:, 'vim_markdown_preview_on_write', 0)
 if !exists("g:vim_markdown_preview_hotkey")
     let g:vim_markdown_preview_hotkey='<C-p>'
@@ -16,6 +16,8 @@ endif
 if !exists("g:vim_markdown_preview_toggle_hotkey")
     let g:vim_markdown_preview_toggle_hotkey='<C-k>'
 endif
+
+let b:vim_markdown_preview__wid = 0
 
 " o'wise disabled by default.
 " b:vim_markdown_preview_enabled: -1 means default to 
@@ -65,7 +67,7 @@ function! Vim_Markdown_Preview()
       let out_file_windowname = expand('%:t') . '.html' " without path prefix
   endif
 
-  let cmd = substitute(substitute(b:vim_markdown_preview_command, "INFILE", curr_file, ""), "OUTFILE", out_file, "")
+  let cmd = substitute(substitute(b:vim_markdown_preview_command, "INFILE", curr_file, "g"), "OUTFILE", out_file, "g")
   if cmd == b:vim_markdown_preview_command
       let cmd = cmd . ' ' . shellescape(curr_file) . ' > ' . shellescape(out_file)
   endif
@@ -73,14 +75,25 @@ function! Vim_Markdown_Preview()
 
   if OSNAME == 'unix'
     let chrome_wid = system("xdotool search --name '". out_file_windowname . " - " . b:vim_markdown_preview_browser . "'")
-    if !chrome_wid
+    if !chrome_wid && b:vim_markdown_preview__wid == 0
       call system('see ' . out_file . ' &> /dev/null &')
+
+      " try to cache the last-used browser window.
+      let b:vim_markdown_preview__wid = system("sleep 5s && xdotool search --name '" . b:vim_markdown_preview_browser . "' | tail -1")
     else
+      " use cached if we couldn't find a match. if we did find a match,
+      " update cache.
+      if !chrome_wid
+        let chrome_wid = b:vim_markdown_preview__wid
+      else
+        let b:vim_markdown_preview__wid = chrome_wid
+      endif
       let curr_wid = system('xdotool getwindowfocus')
       call system('xdotool windowmap ' . chrome_wid)
       call system('xdotool windowactivate ' . chrome_wid)
       call system("xdotool key 'ctrl+r'")
       call system('xdotool windowactivate ' . curr_wid)
+
     endif
   endif
 
@@ -89,8 +102,7 @@ function! Vim_Markdown_Preview()
   endif
 
   if b:vim_markdown_preview_remove_output == 1
-    sleep 1000m
-    call system('rm ' . out_file)
+    call system('sleep 1s && rm ' . out_file)
   endif
 endfunction
 
