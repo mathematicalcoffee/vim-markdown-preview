@@ -23,7 +23,7 @@ A small Vim plugin for previewing markdown files in a browser.
 
 The aim of this plugin is to be light weight with minimal dependencies. Thus, there is *no* polling engine or webserver involved.
 
-Oct 2015: Modified to call `pandoc` by default and allow specification of the command (see [`vim_markdown_preview_command`](#command)).
+Oct 2015: Modified to call `pandoc` by default and allow specification of the command (see [`vim_markdown_preview_command`](#command)); code tidyup, but now it fails if you open the markdown file second (**@FIXME**)
 
 ![Screenshot](images/screenshot.gif?raw=true "Preview on buffer write using Unix")
 
@@ -51,12 +51,12 @@ Requirements
 
 ### Mac OS X:
 
-* [Markdown](http://daringfireball.net/projects/markdown/) or [grip](https://github.com/joeyespo/grip) (for [GitHub flavoured markdown](#github))
+* [Pandoc](http://pandoc.org/) (or whichever tool you wish to use to compile your markdown; configure with [`vim_markdown_preview_command`](#command))
 * [Safari](https://www.apple.com/safari/)
 
 ### Unix:
 
-* [Markdown](http://daringfireball.net/projects/markdown/) or [grip](https://github.com/joeyespo/grip) (for [GitHub flavoured markdown](#github))
+* [Pandoc](http://pandoc.org/) (or whichever tool you wish to use to compile your markdown; configure with [`vim_markdown_preview_command`](#command))
 * [xdotool](https://github.com/jordansissel/xdotool)
 * [Google Chrome](https://www.google.com/chrome/browser/) or [other browser](https://github.com/JamshedVesuna/vim-markdown-preview/wiki/Use-other-browser-to-preview-markdown#ubuntu-or-debian)
 
@@ -74,7 +74,7 @@ Default: 0
 
 Example: Render the output HTML file locally rather than a temp directory.
 ```vim
-let vim_markdown_preview_use_local=1
+let g:vim_markdown_preview_use_local=1
 ```
 
 <a name='temp'></a>
@@ -86,7 +86,7 @@ Default: `0`
 
 Example: Remove the rendered preview.
 ```vim
-let vim_markdown_preview_temp_file=1
+let g:vim_markdown_preview_temp_file=1
 ```
 
 <a name='toggle'></a>
@@ -98,7 +98,7 @@ Default: `'<C-k>'`
 
 Example: Mapping Control M.
 ```vim
-let vim_markdown_preview_toggle_hotkey='<C-m>'
+let g:vim_markdown_preview_toggle_hotkey='<C-m>'
 ```
 
 By default, preview-on-write is initially disabled for each tab. To initially enable it for all markdown files (so that the first `C-k` will disable it), set `vim_markdown_preview_on_write` to 1.
@@ -107,7 +107,7 @@ Default: 0
 
 Example: To have all markdown files preview automatically on write by default.
 ```vim
-let vim_markdown_preview_on_write=1
+let g:vim_markdown_preview_on_write=1
 ```
 
 <a name='manual'></a>
@@ -119,19 +119,30 @@ Default: `'<C-p>'`
 
 Example: Mapping Control M.
 ```vim
-let vim_markdown_preview_hotkey='<C-m>'
+let g:vim_markdown_preview_hotkey='<C-m>'
 ```
 
 <a name='command'></a>
 ### The `vim_markdown_preview_command` option
 
-By default, this plugin uses `pandoc --toc --standalone -t html ` to compile the document.
-You can change the command.
+By default, this plugin uses `pandoc --toc --standalone -t html` to compile the document. You can change the command. Use the tokens `INFILE` and `OUTFILE` to specify the input and output files if they must go in particular places (these are unquoted). If neither is included, we will run `{command} INFILE > OUTFILE`.
 
-Example: adding `--mathjax` to the command:
+Example: adding `--mathjax` to the command will run `pandoc --mathjax --toc --standalone -t html INFILE > OUTFILE`:
 
 ```vim
 let g:vim_markdown_preview_command = 'pandoc --mathjax --toc --standalone -t html '
+```
+
+Example: using github-flavoured markdown (note the default Pandoc markdown is more generic than this):
+
+```vim
+let g:vim_markdown_preview_command = 'pandoc --toc --standalone -f markdown_github -t html '
+```
+
+Example: you may wish to specify the `INFILE` and `OUTFILE` arguments go:
+
+```vim
+let g:vim_markdown_preview_command = 'pandoc --toc --standalone -t html "INFILE" -o "OUTFILE"'
 ```
 
 <a name='browser'></a>
@@ -144,20 +155,13 @@ Default: `'Google Chrome'`
 
 Example: Using Google Chrome.
 ```vim
-let vim_markdown_preview_browser='Google Chrome'
+let g:vim_markdown_preview_browser='Google Chrome'
 ```
 
 <a name='github'></a>
-### The `vim_markdown_preview_github` option
+### **(DEPRECIATED)** The `vim_markdown_preview_github` option
 
-If you prefer [GitHub flavoured markdown](https://help.github.com/articles/github-flavored-markdown/) you need to install [Python grip](https://github.com/joeyespo/grip). Note that this makes a request to [GitHub's API](https://developer.github.com/v3/markdown/) (causing latencies) and may require [authentication](https://github.com/joeyespo/grip#access). This option also requires a network connection.
-
-Default: `0`
-
-Example: Use GitHub flavoured markdown.
-```vim
-let vim_markdown_preview_github=1
-```
+This has been depreciated: simply set `vim_markdown_preview_command` to `pandoc [your arguments] -t html -f markdown-github`.
 
 Behind The Scenes
 -----------------
