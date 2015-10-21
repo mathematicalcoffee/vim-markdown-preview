@@ -4,11 +4,11 @@
 "============================================================
 " Usage: ^W to toggle on-write generation in that tab; ^P to force a preview
 "
-let b:vim_markdown_preview_browser = get(g:, 'vim_markdown_preview_browser', 'Google Chrome')
+let g:vim_markdown_preview_browser = get(g:, 'vim_markdown_preview_browser', 'Google Chrome')
 " either 0 (temp file) or 1 (local file)
-let b:vim_markdown_preview_use_local = get(g:, 'vim_markdown_preview_use_local', 0)
-let b:vim_markdown_preview_remove_output = get(g:, 'vim_markdown_preview_remove_output', 0)
-let b:vim_markdown_preview_command = get(g:, 'vim_markdown_preview_command', 'pandoc --toc -V pagetitle:INFILE --standalone -t html INFILE > OUTFILE')
+let g:vim_markdown_preview_use_local = get(g:, 'vim_markdown_preview_use_local', 0)
+let g:vim_markdown_preview_remove_output = get(g:, 'vim_markdown_preview_remove_output', 0)
+let g:vim_markdown_preview_command = get(g:, 'vim_markdown_preview_command', 'pandoc --toc -V pagetitle:INFILE --standalone -t html INFILE > OUTFILE')
 let g:vim_markdown_preview_on_write = get(g:, 'vim_markdown_preview_on_write', 0)
 if !exists("g:vim_markdown_preview_hotkey")
     let g:vim_markdown_preview_hotkey='<C-p>'
@@ -62,24 +62,27 @@ function! Vim_Markdown_Preview()
   let curr_file = expand('%:p')  " full path
   let out_file = '/tmp/vim-markdown-preview.html'
   let out_file_windowname = 'vim-markdown-preview.html'
-  if b:vim_markdown_preview_use_local == 1 
+  if g:vim_markdown_preview_use_local == 1 
       let out_file = curr_file . '.html' " includes path prefix
       let out_file_windowname = expand('%:t') . '.html' " without path prefix
   endif
 
-  let cmd = substitute(substitute(b:vim_markdown_preview_command, "INFILE", curr_file, "g"), "OUTFILE", out_file, "g")
-  if cmd == b:vim_markdown_preview_command
+  let cmd = substitute(substitute(g:vim_markdown_preview_command, "INFILE", curr_file, "g"), "OUTFILE", out_file, "g")
+  if cmd == g:vim_markdown_preview_command
       let cmd = cmd . ' ' . shellescape(curr_file) . ' > ' . shellescape(out_file)
   endif
   call system(cmd)
 
   if OSNAME == 'unix'
-    let chrome_wid = system("xdotool search --name '". out_file_windowname . " - " . b:vim_markdown_preview_browser . "'")
+    if !exists("b:vim_markdown_preview__wid")
+      let b:vim_markdown_preview__wid = 0
+    endif
+    let chrome_wid = system("xdotool search --name '". out_file_windowname . " - " . g:vim_markdown_preview_browser . "'")
     if !chrome_wid && b:vim_markdown_preview__wid == 0
       call system('see ' . out_file . ' &> /dev/null &')
 
       " try to cache the last-used browser window.
-      let b:vim_markdown_preview__wid = system("sleep 5s && xdotool search --name '" . b:vim_markdown_preview_browser . "' | tail -1")
+      let b:vim_markdown_preview__wid = system("sleep 5s && xdotool search --name '" . g:vim_markdown_preview_browser . "' | tail -1")
     else
       " use cached if we couldn't find a match. if we did find a match,
       " update cache.
@@ -101,7 +104,7 @@ function! Vim_Markdown_Preview()
     call system('open -g ' . out_file)
   endif
 
-  if b:vim_markdown_preview_remove_output == 1
+  if g:vim_markdown_preview_remove_output == 1
     call system('sleep 1s && rm ' . out_file)
   endif
 endfunction
